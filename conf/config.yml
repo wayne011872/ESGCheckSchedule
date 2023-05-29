@@ -12,9 +12,9 @@ mail:
   ]
 mysql:
   user: root
-  pass: A880915a
+  pass: numaxadm1n
   network: tcp
-  server: 127.0.0.1
+  server: 192.168.88.213
   port: 3306
   defaul: inherite
 log:
