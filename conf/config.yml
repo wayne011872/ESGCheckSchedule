@@ -1,0 +1,22 @@
+mail:
+  username: "numax84257736@gmail.com"
+  server: "smtp.gmail.com"
+  port: "465"
+  ssl: true
+  from: "numax84257736@gmail.com"
+  password: "eakkxyfymdmzgaul"
+  to: [
+    "wayne011872@gmail.com",
+    "dragondriverex@gmail.com",
+    "stevendothebest@gmail.com"
+  ]
+mysql:
+  user: root
+  pass: numaxadm1n
+  network: tcp
+  server: 192.168.88.213
+  port: 3306
+  defaul: inherite
+log:
+    level: debug
+    target: os
