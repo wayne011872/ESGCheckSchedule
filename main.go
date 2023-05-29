@@ -76,6 +76,9 @@ func runAutoCheck() error {
 		}
 		if len(issuedInvoiceNo) > 0 {
 			issuedInvoice, err := api.RequestPostInvoiceStatus(issuedInvoiceNo)
+			if err != nil && err.Error() != "Not Found" {
+				return err
+			}
 			if len(issuedInvoice) > 0 {
 				var invoiceCheckMessage string
 				fmt.Printf("[%s] 共有%d筆訂單發票需要檢測\n", time.Now().Format("2006-01-02 15:04:05"),len(issuedInvoice))
@@ -88,9 +91,6 @@ func runAutoCheck() error {
 				}
 			} else {
 				fmt.Printf("[%s] 沒有發票需要檢測\n", time.Now().Format("2006-01-02 15:04:05"))
-			}
-			if err != nil && err.Error() != "Not Found" {
-				return err
 			}
 		}
 		if len(notIssuedOrderId) > 0 {
