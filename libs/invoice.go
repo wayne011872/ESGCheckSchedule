@@ -72,7 +72,6 @@ func CheckBanProfit(uniformList *dao.BanCheck,order []*dao.Order) {
 
 func TransferToPostInvoice(orders []*dao.Order) {
 	for _,o := range orders {
-		o.BuyerName = o.LastName + o.FirstName
 		o.UserId = "37"
 		o.Seller = "28703305"
 		o.IsExchange = "0"
@@ -84,9 +83,15 @@ func TransferToPostInvoice(orders []*dao.Order) {
 			o.IsDonate = "Y"
 		}
 		o.IsPrint = "N"
+		if o.ReceiptTitle == "" {
+			o.BuyerName = o.LastName + o.FirstName
+		} else {
+			o.BuyerName = o.ReceiptTitle
+		}
+		
 		if o.BuyerUniform == "" {
 			o.InvoiceTo = "C"
-		}else{
+		}else {
 			o.InvoiceTo = "B"
 		}
 		o.TaxType = 1

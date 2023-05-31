@@ -8,6 +8,7 @@ type Order struct {
 	StatusId  				string		`gorm:"column:order_status_id"`
 	UserId    				string		`json:"user_id"`
 	Seller       			string		`json:"seller"`
+	ReceiptTitle			string		`gorm:"column:receipt_title"`
 	BuyerUniform            string		`json:"buyer_uniform" gorm:"column:receipt_uniform_no"`
 	FirstName				string		`gorm:"column:firstname"`
 	LastName				string		`gorm:"column:lastname"`
