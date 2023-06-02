@@ -3,8 +3,10 @@ package libs
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/wayne011872/ESGCheckSchedule/dao"
@@ -49,6 +51,19 @@ func CheckInvoiceError(paidInvoice []*dao.InvoiceStatus) []string{
 func TransferStrToTimeStr(dateTime string)string {
 	timeStr := dateTime[0:4] + "-" + dateTime[4:6] + "-" + dateTime[6:8] + " " + dateTime[8:10] + ":" + dateTime[10:12] + ":" + dateTime[12:14]
 	return timeStr
+}
+
+func GetBuyerAddress(order *dao.Order) {
+	pattern := "\\d+"
+    isCityContainNum,_ := regexp.MatchString(pattern,order.PaymentCity)
+	isZoneContainNum,_ := regexp.MatchString(pattern,order.PaymentZone)
+	order.BuyerAddress = order.PaymentAddress
+	if !strings.Contains(order.PaymentAddress, order.PaymentCity) && !isCityContainNum{
+		order.BuyerAddress = order.PaymentCity + order.BuyerAddress
+	}
+	if !strings.Contains(order.PaymentAddress, order.PaymentZone) && !isZoneContainNum{
+		order.BuyerAddress = order.PaymentZone + order.BuyerAddress
+	}
 }
 
 func CheckBanProfit(uniformList *dao.BanCheck,order []*dao.Order) {
@@ -103,6 +118,7 @@ func TransferToPostInvoice(orders []*dao.Order) {
 			o.SalesAmount = totalAmount
 			o.TaxAmount = 0
 		}
+		GetBuyerAddress(o)
 	}
 }
 

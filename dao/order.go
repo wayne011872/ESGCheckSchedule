@@ -15,6 +15,10 @@ type Order struct {
 	BuyerName               string		`json:"buyer_name"`
 	BuyerEmail				string		`json:"buyer_email" gorm:"column:email"`
 	BuyerPhone              string		`json:"buyer_phone" gorm:"column:telephone"`
+	PaymentAddress			string		`gorm:"column:payment_address_1"`
+	PaymentCity				string		`gorm:"column:payment_city"`
+	PaymentZone				string		`gorm:"column:payment_zone"`
+	BuyerAddress			string		`json:"buyer_address"`
 	CarrierType				string		`json:"carrier_type" gorm:"column:carrier_type"`
 	CarrierId1				string		`json:"carrier_id1" gorm:"column:carrier_id1"`
 	CarrierId2				string		`json:"carrier_id2" gorm:"column:carrier_id2"`

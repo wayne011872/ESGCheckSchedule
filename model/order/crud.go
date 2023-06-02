@@ -29,7 +29,7 @@ type mysqlCRUD struct {
 
 func (m *mysqlCRUD) FindOrdersNotIssue(orderId []string) ([]*dao.Order,error){
 	var orders []*dao.Order
-	selectColumn := []string{"order.order_id","order.receipt_title","order.receipt_uniform_no","order.firstname","order.lastname","order.email","order.telephone","order.carrier_type","order.carrier_id1","order.carrier_id2","order.donate_no","order.total"}
+	selectColumn := []string{"order.order_id","order.receipt_title","order.receipt_uniform_no","order.firstname","order.lastname","order.payment_address_1","order.payment_city","order.payment_zone","order.email","order.telephone","order.carrier_type","order.carrier_id1","order.carrier_id2","order.donate_no","order.total"}
 	result := m.mslDB.Table("order").Select(selectColumn).Where("order_id IN ?",orderId).Find(&orders)
 	if result.Error != nil {
 		return nil,result.Error
