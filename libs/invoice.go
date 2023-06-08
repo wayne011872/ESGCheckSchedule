@@ -80,8 +80,11 @@ func TransferToPostInvoice(orders []*dao.Order) {
 		} else {
 			o.BuyerName = o.ReceiptTitle
 		}
-		
-		o.InvoiceTo = "C"
+		if o.BuyerUniform == "" {
+			o.InvoiceTo = "C"
+		} else {
+			o.InvoiceTo = "B"
+		}
 		o.TaxType = 1
 		totalAmount,_ := strconv.ParseFloat(o.TotalAmount,32)
 		o.SalesAmount = float64(math.Round(totalAmount / 1.05))
