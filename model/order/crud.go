@@ -1,7 +1,7 @@
 package order
 
 import (
-
+	"errors"
 	"github.com/wayne011872/ESGCheckSchedule/dao"
 	"github.com/wayne011872/goSterna/log"
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ func NewCRUD(di *dao.Di) CRUD {
 type CRUD interface {
 	FindOrdersNotIssue(orderId []string) ([]*dao.Order,error)
 	FindPaid(paidStatusCode []uint16) ([]*dao.Order,error)
-	UpdateIssuedOrder(orderId string ,invoicePre string, invoiceNo string)
+	UpdateIssuedOrder(orderId string ,invoiceFullNo string) error
 	UpdateIsCheck(isCheckNo []string)
 }
 
@@ -54,9 +54,17 @@ func (m *mysqlCRUD) findProduct(orderId string)[]dao.Product{
 	return product
 }
 
-func (m *mysqlCRUD) UpdateIssuedOrder(orderId string ,invoicePre string, invoiceNo string) {
-	m.mslDB.Table("order").Where("order_id = ?",orderId).Update("invoice_prefix",invoicePre)
-	m.mslDB.Table("order").Where("order_id = ?",orderId).Update("invoice_no",invoiceNo)
+func (m *mysqlCRUD) UpdateIssuedOrder(orderId string ,invoiceFullNo string) error{
+	var issuedInvoicePre,issuedInvoiceNo string
+	if len(invoiceFullNo) == 10 {
+		issuedInvoicePre = invoiceFullNo[0:2]
+		issuedInvoiceNo = invoiceFullNo[2:10]
+	}else {
+		return errors.New("issued invoice result length less than 10")
+	}
+	m.mslDB.Table("order").Where("order_id = ?",orderId).Update("invoice_prefix",issuedInvoicePre)
+	m.mslDB.Table("order").Where("order_id = ?",orderId).Update("invoice_no",issuedInvoiceNo)
+	return nil
 }
 
 func (m *mysqlCRUD) UpdateIsCheck(checkedNo []string) {

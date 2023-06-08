@@ -1,21 +1,19 @@
 package main
 
 import (
-	"errors"
-	"flag"
-	"fmt"
 	"os"
-	"strconv"
+	"fmt"
+	"flag"
 	"time"
+	"strconv"
 
 	"github.com/joho/godotenv"
-
+	"github.com/wayne011872/goSterna"
 	"github.com/wayne011872/ESGCheckSchedule/api"
 	"github.com/wayne011872/ESGCheckSchedule/dao"
 	"github.com/wayne011872/ESGCheckSchedule/libs"
 	"github.com/wayne011872/ESGCheckSchedule/mail"
 	"github.com/wayne011872/ESGCheckSchedule/model/order"
-	"github.com/wayne011872/goSterna"
 )
 
 var (
@@ -38,7 +36,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("---------------------------------每三小時檢驗一次(下一次檢驗時間 :%s)-----------------------\n", time.Now().Add(3*time.Hour).Format("2006-01-02 15:04:05"))
+			fmt.Printf("---------------------------------每%s小時檢驗一次(下一次檢驗時間 :%s)-----------------------\n", detectInv,time.Now().Add(time.Duration(detectInvInt) *time.Hour).Format("2006-01-02 15:04:05"))
 			time.Sleep(time.Duration(detectInvInt) * time.Hour)
 		}
 	case "cli":
@@ -75,23 +73,11 @@ func runAutoCheck() error {
 			}
 		}
 		if len(issuedInvoiceNo) > 0 {
-			issuedInvoice, err := api.RequestPostInvoiceStatus(issuedInvoiceNo)
-			if err != nil && err.Error() != "Not Found" {
+			err := checkInvoice(issuedInvoiceNo)
+			if err != nil {
 				return err
 			}
-			if len(issuedInvoice) > 0 {
-				var invoiceCheckMessage string
-				fmt.Printf("[%s] 共有%d筆訂單發票需要檢測\n", time.Now().Format("2006-01-02 15:04:05"),len(issuedInvoice))
-				for _,i := range issuedInvoice {
-					invoiceCheckMessage += fmt.Sprintf("發票號碼 :%s",i.InvoiceNo)
-				}
-				checkedInvoiceNo := libs.CheckInvoiceError(issuedInvoice)
-				if len(checkedInvoiceNo) > 0 {
-					crud.UpdateIsCheck(checkedInvoiceNo)
-				}
-			} else {
-				fmt.Printf("[%s] 沒有發票需要檢測\n", time.Now().Format("2006-01-02 15:04:05"))
-			}
+			crud.UpdateIsCheck(issuedInvoiceNo)
 		}
 		if len(notIssuedOrderId) > 0 {
 			var notIssuedMessage string
@@ -103,31 +89,43 @@ func runAutoCheck() error {
 			if err != nil {
 				return err
 			}
-			uniformList, err := api.RequestPostCheckBan(notIssuedOrders)
-			if err != nil {
-				return err
-			}
-			libs.CheckBanProfit(uniformList, notIssuedOrders)
 			libs.TransferToPostInvoice(notIssuedOrders)
 			invoiceMailContent := ""
+			invoiceLogContent := ""
 			for _, order := range notIssuedOrders {
-				err, result := api.RequestPostInvoiceIssue(order)
+				result,err := api.RequestPostInvoiceIssue(order)
 				if err != nil {
 					return err
 				}
-				var issuedInvoicePre,issuedInvoiceNo string
-				if len(result) == 10 {
-					issuedInvoicePre = result[0:2]
-					issuedInvoiceNo = result[2:10]
-				}else {
-					return errors.New("issued invoice result length less than 10")
+				err = crud.UpdateIssuedOrder(order.OrderId,result)
+				if err != nil {
+					return err
 				}
-				crud.UpdateIssuedOrder(order.OrderId,issuedInvoicePre,issuedInvoiceNo)
+				invoiceLogContent += result + "\n"
 				invoiceMailContent += "<p>" + result + "</p></br>"
 			}
+			fmt.Printf("[%s] 補開立發票號碼 :%s", time.Now().Format("2006-01-02 15:04:05"),invoiceLogContent)
 			mailContent := fmt.Sprintf("<h3><strong>--------傳承發票補開立通知--------</strong></h3></br><p>補開立發票號碼 :%s</p></br>", invoiceMailContent)
 			mail.SendMail("傳承訂單發票補開立通知", mailContent)
 		}
+	}
+	return nil
+}
+
+func checkInvoice(issuedInvoiceNo []string) error{
+	issuedInvoice, err := api.RequestPostInvoiceStatus(issuedInvoiceNo)
+	if err != nil && err.Error() != "Not Found" {
+		return err
+	}
+	if len(issuedInvoice) > 0 {
+		var invoiceCheckMessage string
+		fmt.Printf("[%s] 共有%d筆訂單發票需要檢測\n", time.Now().Format("2006-01-02 15:04:05"),len(issuedInvoice))
+		for _,i := range issuedInvoice {
+			invoiceCheckMessage += fmt.Sprintf("發票號碼 :%s",i.InvoiceNo)
+		}
+		libs.CheckInvoiceError(issuedInvoice)
+	} else {
+		fmt.Printf("[%s] 沒有發票需要檢測\n", time.Now().Format("2006-01-02 15:04:05"))
 	}
 	return nil
 }

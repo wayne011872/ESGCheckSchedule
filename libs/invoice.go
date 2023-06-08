@@ -13,8 +13,7 @@ import (
 	"github.com/wayne011872/ESGCheckSchedule/mail"
 )
 
-func CheckInvoiceError(paidInvoice []*dao.InvoiceStatus) []string{
-	checkedInvoiceNo := []string{}
+func CheckInvoiceError(paidInvoice []*dao.InvoiceStatus) {
 	invoiceErrStr := ""
 	invoiceOver12Str := ""
 	for _,invoice := range paidInvoice{
@@ -32,7 +31,6 @@ func CheckInvoiceError(paidInvoice []*dao.InvoiceStatus) []string{
 			mail.SendMail("傳承訂單發票異常通知",mailContent)
 			invoiceOver12Str += invoice.InvoiceNo + "\n"
 		}
-		checkedInvoiceNo = append(checkedInvoiceNo, invoice.InvoiceNo)
 	}
 	if invoiceErrStr == "" && invoiceOver12Str == ""{
 		fmt.Printf("[%s] 無檢測到發票異常\n",time.Now().Format("2006-01-02 15:04:05"))
@@ -44,8 +42,6 @@ func CheckInvoiceError(paidInvoice []*dao.InvoiceStatus) []string{
 			fmt.Printf("[%s]檢測到發票超過12小時未上傳 發票號碼: %s",time.Now().Format("2006-01-02 15:04:05"),invoiceOver12Str)
 		}
 	}
-	
-	return checkedInvoiceNo
 }
 
 func TransferStrToTimeStr(dateTime string)string {
@@ -63,25 +59,6 @@ func GetBuyerAddress(order *dao.Order) {
 	}
 	if !strings.Contains(order.PaymentAddress, order.PaymentZone) && !isZoneContainNum{
 		order.BuyerAddress = order.PaymentZone + order.BuyerAddress
-	}
-}
-
-func CheckBanProfit(uniformList *dao.BanCheck,order []*dao.Order) {
-	for _,o := range order {
-		if o.BuyerUniform == ""{
-			o.IsProfit = "Y"
-			continue
-		}
-		for _,p := range uniformList.Profit {
-			if p==o.BuyerUniform{
-				o.IsProfit = "Y"
-			}
-		}
-		for _,p := range uniformList.NonProfit {
-			if p==o.BuyerUniform{
-				o.IsProfit = "N"
-			}
-		}
 	}
 }
 
@@ -104,20 +81,11 @@ func TransferToPostInvoice(orders []*dao.Order) {
 			o.BuyerName = o.ReceiptTitle
 		}
 		
-		if o.BuyerUniform == "" {
-			o.InvoiceTo = "C"
-		}else {
-			o.InvoiceTo = "B"
-		}
+		o.InvoiceTo = "C"
 		o.TaxType = 1
 		totalAmount,_ := strconv.ParseFloat(o.TotalAmount,32)
-		if o.IsProfit == "Y" {
-			o.SalesAmount = float64(math.Round(totalAmount / 1.05))
-			o.TaxAmount = totalAmount - o.SalesAmount
-		}else{
-			o.SalesAmount = totalAmount
-			o.TaxAmount = 0
-		}
+		o.SalesAmount = float64(math.Round(totalAmount / 1.05))
+		o.TaxAmount = totalAmount - o.SalesAmount
 		GetBuyerAddress(o)
 	}
 }

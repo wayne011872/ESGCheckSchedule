@@ -19,8 +19,8 @@ type invoiceRequestBody struct{
 }
 
 type invoiceResponseBody struct{
-	Status     string			`json:"status"`
-	Msg        string   		`json:"msg"`
+	Status     string				`json:"status"`
+	Msg        string   			`json:"msg"`
 	Result     []*dao.InvoiceStatus	`json:"result"`
 }
 type invoiceIssueNo struct {
@@ -32,17 +32,6 @@ type invoiceIssueResponseBody struct {
 	Msg        	string   		`json:"msg"`
 	Result		*invoiceIssueNo	`json:"result"`
 }
-type banRequestBody struct {
-	Seller 		string    `json:"seller"`
-	Act   string       `json:"act"`
-	BanList []string   `json:"ban"`
-}
-type banResponseBody struct{
-	Status     string			`json:"status"`
-	Msg        string   		`json:"msg"`
-	Result     *dao.BanCheck	`json:"result"`
-}
-
 
 func RequestPostInvoiceStatus(i []string)([]*dao.InvoiceStatus,error){
 	fmt.Printf("[%s] Send Post Turnkey Invoice Status To EinvoiceCenter\n",time.Now().Format("2006-01-02 15:04:05"))
@@ -80,82 +69,37 @@ func RequestPostInvoiceStatus(i []string)([]*dao.InvoiceStatus,error){
 	return invoiceResponse.Result,nil
 }
 
-
-func RequestPostCheckBan(order []*dao.Order)(*dao.BanCheck,error){
-	fmt.Printf("[%s] Send Check Ban Request To EinvoiceCenter\n",time.Now().Format("2006-01-02 15:04:05"))
-	banList := []string{}
-	for _,o := range order {
-		banList = append(banList,o.BuyerUniform)
-	}
-	banRB := &banRequestBody{
-		Seller: "28703305",
-		Act:"query_ban",
-		BanList: banList,
-	}
-	rb,err := json.Marshal(banRB)
-	if err !=nil {
-		return nil,err
-	}
-	requestURI := os.Getenv(("INVOICE_URI"))
-	client := &http.Client{}
-	req,err := http.NewRequest("POST",requestURI,bytes.NewReader(rb))
-	if err !=nil {
-		return nil,err
-	}
-	req.Header.Add("Authorization","2RErbrOodU77ZOREF/2+2o80E/bHA8VKhQC42A+i78=z4+f")
-	resp,err := client.Do(req)
-	if err != nil {
-		return nil,err
-	}
-	defer resp.Body.Close()
-	body,err := io.ReadAll(resp.Body)
-	if err != nil{
-		return nil,err
-	}
-	body = bytes.TrimPrefix(body, []byte("\xef\xbb\xbf"))
-	banResponse := &banResponseBody{}
-	err = json.Unmarshal(body,banResponse)
-	if err != nil {
-		return nil,err
-	}
-	if banResponse.Status != "success" {
-		err := errors.New(banResponse.Msg)
-		return nil,err
-	}
-	return banResponse.Result,nil
-}
-
-func RequestPostInvoiceIssue(o *dao.Order)(error,string){
+func RequestPostInvoiceIssue(o *dao.Order)(string,error){
 	fmt.Printf("[%s] Send Issue Invoice Request To EinvoiceCenter\n",time.Now().Format("2006-01-02 15:04:05"))
 	rb,err := json.Marshal(o)
 	if err !=nil {
-		return err,""
+		return "",err
 	}
 	requestURI := os.Getenv(("INVOICE_URI"))
 	client := &http.Client{}
 	req,err := http.NewRequest("POST",requestURI,bytes.NewReader(rb))
 	if err !=nil {
-		return err,""
+		return "",err
 	}
 	req.Header.Add("Authorization","2RErbrOodU77ZOREF/2+2o80E/bHA8VKhQC42A+i78=z4+f")
 	resp,err := client.Do(req)
 	if err != nil {
-		return err,""
+		return "",err
 	}
 	defer resp.Body.Close()
 	body,err := io.ReadAll(resp.Body)
 	if err != nil{
-		return err,""
+		return "",err
 	}
 	body = bytes.TrimPrefix(body, []byte("\xef\xbb\xbf"))
 	invoiceResponse := &invoiceIssueResponseBody{}
 	err = json.Unmarshal(body,invoiceResponse)
 	if err != nil {
-		return err,""
+		return "",err
 	}
 	if invoiceResponse.Status != "success" {
 		err := errors.New(invoiceResponse.Msg)
-		return err,""
+		return "",err
 	}
-	return nil,invoiceResponse.Result.InvoiceNo
+	return invoiceResponse.Result.InvoiceNo,nil
 }
