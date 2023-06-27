@@ -82,13 +82,16 @@ func TransferToPostInvoice(orders []*dao.Order) {
 		}
 		if o.BuyerUniform == "" {
 			o.InvoiceTo = "C"
+			totalAmount,_ := strconv.ParseFloat(o.TotalAmount,32)
+			o.SalesAmount = float64(totalAmount)
+			o.TaxAmount = 0
 		} else {
 			o.InvoiceTo = "B"
+			totalAmount,_ := strconv.ParseFloat(o.TotalAmount,32)
+			o.SalesAmount = float64(math.Round(totalAmount / 1.05))
+			o.TaxAmount = totalAmount - o.SalesAmount
 		}
 		o.TaxType = 1
-		totalAmount,_ := strconv.ParseFloat(o.TotalAmount,32)
-		o.SalesAmount = float64(math.Round(totalAmount / 1.05))
-		o.TaxAmount = totalAmount - o.SalesAmount
 		GetBuyerAddress(o)
 	}
 }

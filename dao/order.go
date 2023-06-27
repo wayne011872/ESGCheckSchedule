@@ -1,7 +1,7 @@
 package dao
 
 type Order struct {
-	OrderId					string		`gorm:"column:order_id"`
+	OrderId					string		`json:"order_no" gorm:"column:order_id"`
 	InvoiceNo				string		`gorm:"column:invoice_no"`
 	InvoicePrefix			string		`gorm:"column:invoice_prefix"`
 	InvoiceDataTime			string		`gorm:"column:receipt_date"`
